@@ -1,0 +1,233 @@
+/*
+Taschenrechner-Program
+Bernhard Thomas Juni-2020
+
+Erkennt mathematische eingaben in der Console und behandelt dieser anhand folgender Grammatik:
+
+Expression:
+    Term
+    Expression + Term
+    Expression - Term
+Term
+    Primary
+    Term * Primary
+    Term / Primary
+Primary
+    Number
+    ( Expression )
+    - Primary
+    + Primary
+Number
+    floating-point-literal 
+*/
+
+
+#include <iostream>
+#include <exception>
+#include "myError.h"
+using std::cin;
+using std::cout;
+
+
+class Token{
+public:
+    char kind;
+    double  value;
+
+    Token(char c) : kind{ c }, value{ 0 }{}
+    Token(char c, double d) : kind{c}, value{d}{}
+
+};
+
+class Token_Stream {
+public:
+    Token get();
+    void putback(Token t);
+private:
+    bool full{ false };
+    Token buffer;
+};
+
+void Token_Stream::putback(Token t)
+{
+    if (full) error("putback() into a full buffer");
+    buffer = t;
+    full = true;
+}
+Token Token_Stream::get()
+{
+    if (full) {
+        full = false;
+        return buffer;
+    }
+
+    char ch{};
+    cin >> ch;
+
+    switch (ch) {
+    case '?':
+    case ';':       //for print
+    case 'q':       //for quit
+    case '(':       //operators and brackets
+    case ')':       //operators and brackets
+    case '+':       //operators and brackets
+    case '-':       //operators and brackets
+    case '*':       //operators and brackets
+    case '/':       //operators and brackets
+        return Token{ ch };     //character represents itself
+    case '.':                                           // token represents a number
+    case '0': case '1': case '2': case '3': case '4':   // token represents a number
+    case '5': case '6': case '7': case '8': case '9':   // token represents a number
+    {
+        cin.putback(ch);
+        double val;
+        cin >> val;
+        return Token{ '8', val };
+    }
+    default:
+        error("Bad token");
+    }
+
+}
+
+Token_Stream ts;
+
+
+/*Implementierung der benötigten Grammatik*/
+
+double expression();
+double term();
+double primary();
+
+double expression() 
+{
+    double left = term();
+    Token t = ts.get();
+    while (true){
+        switch (t.kind) {
+        case '+':
+            left += term();
+            t = ts.get();
+            break;
+        case '-':
+            left -= term();
+            t = ts.get();
+            break;
+        default:
+            ts.putback(t);
+            return left;
+        }
+    }
+}
+
+double term() 
+{
+    double left = primary();
+    Token t = ts.get();
+    while (true) {
+        switch (t.kind){
+        case '*':
+            left *= primary();
+            t = ts.get();
+            break;
+        case '/':
+        {
+            double d = primary();
+            if (d == 0) error("divide by zero");
+            left /= d;
+            t = ts.get();
+            break;
+        }
+        default:
+            ts.putback(t);
+            return left;
+        }
+    }
+}
+
+double primary()
+{
+    Token t = ts.get();
+    switch (t.kind)
+    {
+    case '(':
+    {
+        double d = expression();
+        t = ts.get();
+        if (t.kind != ')') error("')' expected");
+        return d;
+    }
+    case '8':
+        return t.value;
+    case '-':
+        return -primary();
+    case '+':
+        return primary();
+    default:
+        error("primary expected");
+    }
+}
+
+
+/*Eingabeaufforderung*/
+void start_prompt()
+{
+    cout << "Geben sie eine mathematischen Ausdruck ein. \nGeben sie '?' ein, um Bedienungshilfe an zu zeigen.\n";
+}
+
+/*Bedienungshilfe*/
+void help()
+{
+    cout << "Mathematische Ausdruecke die folgende Zeichen enthalten sind erlaubt:\nKlammern:\t'('\t')'\nOperatoren:\t '+'\t'-'\t'*'\t'/'\n"
+        "Einem Ausdruck muss ein ';' folgen\n"
+        "Es koennen mehrere Ausdruecke hintereinander eingegeben werden\n"
+        "geben sie 'q' ein, um das Program zu beenden\n";
+}
+
+/**/
+void calculate()
+{
+    while (cin)
+    {
+        const string prompt = "> ";             // EingabeAufforderung
+        const string result = "= ";             // Angabe Ausgabe
+
+        cout << prompt;
+        Token t = ts.get();
+
+
+        while (t.kind == ';') t = ts.get();
+        if (t.kind == 'q')
+        {
+            cout << "Program terminated \n";
+            break;
+        }
+        if (t.kind == '?')
+        {
+            help();
+            calculate();
+        }
+        ts.putback(t);
+        cout << result << expression() << '\n';
+    }
+}
+
+
+
+
+int main()
+{
+    try {
+        start_prompt();
+        calculate();
+        }
+    catch (std::exception& e)
+    {
+        std::cerr << e.what() << '\n';
+        return -1;
+    }
+    catch (...) {
+        std::cerr << "exception \n";
+        return -2;
+    }
+}

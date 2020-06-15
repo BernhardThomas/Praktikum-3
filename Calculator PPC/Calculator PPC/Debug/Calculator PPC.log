@@ -1,0 +1,5 @@
+﻿  Token.cpp
+E:\Projects\001 PAD1\Praktikum 3\Calculator PPC\Calculator PPC\Token.cpp(7,1): error C2084: function 'void Token_Stream::putback(Token)' already has a body
+E:\Projects\001 PAD1\Praktikum 3\Calculator PPC\Calculator PPC\Token.h(24): message : see previous definition of 'putback'
+E:\Projects\001 PAD1\Praktikum 3\Calculator PPC\Calculator PPC\Token.cpp(13,1): error C2084: function 'Token Token_Stream::get(void)' already has a body
+E:\Projects\001 PAD1\Praktikum 3\Calculator PPC\Calculator PPC\Token.h(30): message : see previous definition of 'get'
